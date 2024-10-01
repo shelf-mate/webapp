@@ -1,25 +1,58 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
+import { AiOutlineSetting, AiOutlineHome } from 'react-icons/ai';
+import ProductTable from './components/ProductTable';
+import SettingsPage from './pages/Settings';
+import './index.css';
 
-function App() {
+const App: React.FC = () => {
+  const handleVibration = () => {
+    if (navigator.vibrate) {
+      navigator.vibrate(100);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <Router>
+        <div className="App min-h-screen flex flex-col justify-between">
+          <div className="flex-grow">
+            <Routes>
+              <Route path="/" element={<ProductTable />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
+          </div>
+
+          {/* Bottom Navigation */}
+          <nav className="fixed bottom-0 left-0 right-0 bg-gray-200 p-4 flex justify-around shadow-lg">
+            <NavLink
+                to="/"
+                className={({ isActive }) =>
+                    isActive ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
+                }
+                end
+                onClick={handleVibration}  // Vibration beim Klick auf den Home-Link
+            >
+              <div className="flex flex-col items-center">
+                <AiOutlineHome className="text-2xl" />
+                <span className="text-xs">Home</span>
+              </div>
+            </NavLink>
+
+            <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                    isActive ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
+                }
+                onClick={handleVibration}  // Vibration beim Klick auf den Settings-Link
+            >
+              <div className="flex flex-col items-center">
+                <AiOutlineSetting className="text-2xl" />
+                <span className="text-xs">Settings</span>
+              </div>
+            </NavLink>
+          </nav>
+        </div>
+      </Router>
   );
 }
 
