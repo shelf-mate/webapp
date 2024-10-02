@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 import { AiOutlineSetting, AiOutlineHome } from 'react-icons/ai';
 import ProductTable from './components/ProductTable';
+import './index.css'
 import SettingsPage from './pages/Settings';
-import './index.css';
 
 const App: React.FC = () => {
   const handleVibration = () => {
@@ -30,7 +30,7 @@ const App: React.FC = () => {
                     isActive ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
                 }
                 end
-                onClick={handleVibration}  // Vibration beim Klick auf den Home-Link
+                onClick={handleVibration}
             >
               <div className="flex flex-col items-center">
                 <AiOutlineHome className="text-2xl" />
@@ -43,7 +43,7 @@ const App: React.FC = () => {
                 className={({ isActive }) =>
                     isActive ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
                 }
-                onClick={handleVibration}  // Vibration beim Klick auf den Settings-Link
+                onClick={handleVibration}
             >
               <div className="flex flex-col items-center">
                 <AiOutlineSetting className="text-2xl" />
