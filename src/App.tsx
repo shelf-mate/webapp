@@ -1,9 +1,10 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { BrowserRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 import { AiOutlineSetting, AiOutlineHome } from 'react-icons/ai';
 import ProductTable from './components/ProductTable';
 import './index.css'
 import SettingsPage from './pages/Settings';
+import { getAllUnits } from './api/api'; // Importiere die API-Funktion, falls sie in einer separaten Datei ist
 
 const App: React.FC = () => {
   const handleVibration = () => {
@@ -21,8 +22,6 @@ const App: React.FC = () => {
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </div>
-
-          {/* Bottom Navigation */}
           <nav className="fixed bottom-0 left-0 right-0 bg-gray-200 p-4 flex justify-around shadow-lg">
             <NavLink
                 to="/"
