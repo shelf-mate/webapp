@@ -4,7 +4,6 @@ import { AiOutlineSetting, AiOutlineHome } from 'react-icons/ai';
 import ProductTable from './components/ProductTable';
 import './index.css'
 import SettingsPage from './pages/Settings';
-import { getAllUnits } from './api/api'; // Importiere die API-Funktion, falls sie in einer separaten Datei ist
 
 const App: React.FC = () => {
   const handleVibration = () => {
