@@ -48,13 +48,6 @@ build/
 # Next.js build output
 .next/
 
-# Tailwind compiled output
-tailwind.config.js
-src/index.css
-
-# Webpack files
-webpack.config.js
-
 # dotenv environment variables file
 .env
 .env.local
