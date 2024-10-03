@@ -84,5 +84,7 @@ webpack.config.js
 *.lock
 *.bak
 
-# Ignore node and tailwind-generated files
-public/
+# Exclude specific generated files in public, but not the entire folder
+public/*.tmp
+public/*.log
+public/temp/
