@@ -6,9 +6,20 @@ interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
     children: ReactNode;
+    onConfirm?: () => void;
+    confirmButtonLabel?: string;
+    confirmButtonColor?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({
+                                         title,
+                                         isOpen,
+                                         onClose,
+                                         children,
+                                         onConfirm,
+                                         confirmButtonLabel = 'Save',
+                                         confirmButtonColor = 'bg-primaryColor' // Standardfarbe
+                                     }) => {
     if (!isOpen) return null;
 
     return (
@@ -21,9 +32,24 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
                     </button>
                 </div>
                 <div className="mt-4 overflow-y-auto">{children}</div>
-                <button onClick={onClose} className="w-full p-4 text-center text-blue-500 bg-white border-t mt-4 rounded-b-3xl">
-                    Done
-                </button>
+
+                <div className="flex mt-4">
+                    {onConfirm ? (
+                        <button
+                            onClick={onConfirm}
+                            className={`w-full p-3 mt-2 rounded-md text-white ${confirmButtonColor}`}
+                        >
+                            {confirmButtonLabel}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={onClose}
+                            className="w-full py-4 px-6 text-center text-primaryColor bg-white border-t rounded-3xl"
+                        >
+                            Done
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
