@@ -158,7 +158,7 @@ const ProductTable: React.FC = () => {
                             className="flex justify-between items-center p-2 bg-white rounded-lg shadow-sm cursor-pointer"
                             onClick={() => navigate(`/product/${product.id}`)}
                         >
-                            <div className="ml-4">
+                            <div>
                                 <h3 className="font-semibold">
                                     {product.name.length > 25 ? `${product.name.slice(0, 25)}...` : product.name}
                                 </h3>

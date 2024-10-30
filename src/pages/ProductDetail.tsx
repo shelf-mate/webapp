@@ -9,13 +9,11 @@ const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [product, setProduct] = useState<ApiProduct | null>(null);
-    const [initialProduct, setInitialProduct] = useState<ApiProduct | null>(null);
     const [units, setUnits] = useState<Unit[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [storages, setStorages] = useState<Storage[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isUpdating, setIsUpdating] = useState<boolean>(false);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -25,9 +23,7 @@ const ProductDetail: React.FC = () => {
     const [newUnit, setNewUnit] = useState('');
     const [newStorage, setNewStorage] = useState('');
 
-    const [expirationDate, setExpirationDate] = useState<string | undefined>(
-        product?.expirationDate ? new Date(product.expirationDate).toISOString().split('T')[0] : undefined
-    );
+    const [expirationDate, setExpirationDate] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -46,7 +42,6 @@ const ProductDetail: React.FC = () => {
 
                 if ('data' in productResponse && 'data' in unitsResponse && 'data' in categoriesResponse && 'data' in storagesResponse) {
                     setProduct(productResponse.data);
-                    setInitialProduct(productResponse.data);
                     setUnits(unitsResponse.data as Unit[]);
                     setCategories(categoriesResponse.data as Category[]);
                     setStorages(storagesResponse.data as Storage[]);
@@ -63,31 +58,15 @@ const ProductDetail: React.FC = () => {
         fetchData();
     }, [id]);
 
-    const handleUpdate = async () => {
-        if (product && initialProduct && id) {
-            setIsUpdating(true);
-            try {
-                const updatedFields = {
-                    name: product.name !== initialProduct.name ? product.name : undefined,
-                    quantity: product.quantity !== initialProduct.quantity ? product.quantity : undefined,
-                    categoryId: product.category?.id !== initialProduct.category?.id ? product.category?.id : undefined,
-                    unitId: product.unit?.id !== initialProduct.unit?.id ? product.unit?.id : undefined,
-                    storageId: product.storage?.id !== initialProduct.storage?.id ? product.storage?.id : undefined,
-                    expirationDate: expirationDate && expirationDate !== new Date(initialProduct.expirationDate).toISOString().split('T')[0] ? new Date(`${expirationDate}T12:00:00Z`) : undefined,
-                };
-
-                const response = await updateProduct(id, updatedFields);
-                alert('Product updated successfully!');
-                navigate('/');
-            } catch (error: unknown) {
-                if (error instanceof AxiosError && error.response) {
-                    setError(`Failed to update product: ${error.response.statusText}`);
-                } else {
-                    setError('Failed to update product: Request error');
-                }
-            } finally {
-                setIsUpdating(false);
-            }
+    const handleUpdateField = async (field: Partial<ApiProduct>) => {
+        if (!id || !product) return;
+        try {
+            const updatedProduct = { ...product, ...field };
+            await updateProduct(id, field);
+            setProduct(updatedProduct);
+        } catch (error) {
+            console.error('Failed to update product:', error);
+            setError('Failed to update product: Request error');
         }
     };
 
@@ -191,13 +170,12 @@ const ProductDetail: React.FC = () => {
                 <div className="w-1/3"></div>
             </div>
 
-
             <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-600">Name</label>
                 <input
                     type="text"
                     value={product.name}
-                    onChange={(e) => setProduct({...product, name: e.target.value})}
+                    onChange={(e) => handleUpdateField({ name: e.target.value })}
                     className="w-full border-b-2 p-2 pl-0 focus:outline-none"
                 />
             </div>
@@ -214,7 +192,7 @@ const ProductDetail: React.FC = () => {
                 <input
                     type="number"
                     value={product.quantity}
-                    onChange={(e) => setProduct({...product, quantity: parseInt(e.target.value, 10)})}
+                    onChange={(e) => handleUpdateField({ quantity: parseInt(e.target.value, 10) })}
                     className="w-full border-b-2 p-2 pl-0 focus:outline-none"
                 />
             </div>
@@ -238,86 +216,19 @@ const ProductDetail: React.FC = () => {
                 <input
                     type="date"
                     value={expirationDate || ''}
-                    onChange={(e) => setExpirationDate(e.target.value)}
+                    onChange={(e) => {
+                        setExpirationDate(e.target.value);
+                        handleUpdateField({ expirationDate: new Date(`${e.target.value}T12:00:00Z`) });
+                    }}
                     className="w-full border-b-2 p-2 pl-0 focus:outline-none"
                 />
             </div>
 
-            <button onClick={handleUpdate} className="w-full bg-primaryColor text-white p-3 mt-4 rounded-md">
-                Update
-            </button>
-
             <button onClick={handleDelete} className="w-full bg-red-500 text-white p-3 mt-2 rounded-md">
                 Delete
             </button>
-            <Modal title="Select or Add Category" isOpen={isCategoryModalOpen}
-                   onClose={() => setCategoryModalOpen(false)}>
-                <ul className="divide-y">
-                    {categories.map((category) => (
-                        <li key={category.id} className="flex justify-between items-center p-4">
-                            <span onClick={() => {
-                                setProduct({...product, category: category});
-                                setCategoryModalOpen(false);
-                            }}>
-                                {category.name}
-                            </span>
-                            <button onClick={() => handleDeleteCategory(category.id)}><FiDelete/></button>
-                        </li>
-                    ))}
-                </ul>
-                <input type="text" value={newCategory} onChange={(e) => setNewCategory(e.target.value)}
-                       placeholder="New Category" className="w-full border-b-2 p-2 mt-4 focus:outline-none"/>
-                <button onClick={addNewCategory}
-                        className="w-full text-center bg-primaryColor text-white p-2 mt-2 rounded-md">
-                    Add Category
-                </button>
-            </Modal>
-
-            <Modal title="Select or Add Unit" isOpen={isUnitModalOpen} onClose={() => setUnitModalOpen(false)}>
-                <ul className="divide-y">
-                    {units.map((unit) => (
-                        <li key={unit.id} className="flex justify-between items-center p-4">
-                            <span onClick={() => {
-                                setProduct({...product, unit: unit});
-                                setUnitModalOpen(false);
-                            }}>
-                                {unit.name}
-                            </span>
-                            <button onClick={() => handleDeleteUnit(unit.id)}><FiDelete/></button>
-                        </li>
-                    ))}
-                </ul>
-                <input type="text" value={newUnit} onChange={(e) => setNewUnit(e.target.value)} placeholder="New Unit"
-                       className="w-full border-b-2 p-2 mt-4 focus:outline-none"/>
-                <button onClick={addNewUnit} className="w-full text-center bg-primaryColor text-white p-2 mt-2 rounded-md">
-                    Add Unit
-                </button>
-            </Modal>
-
-            <Modal title="Select or Add Storage" isOpen={isStorageModalOpen} onClose={() => setStorageModalOpen(false)}>
-                <ul className="divide-y">
-                    {storages.map((storage) => (
-                        <li key={storage.id} className="flex justify-between items-center p-4">
-                            <span onClick={() => {
-                                setProduct({...product, storage: storage});
-                                setStorageModalOpen(false);
-                            }}>
-                                {storage.name}
-                            </span>
-                            <button onClick={() => handleDeleteStorage(storage.id)}><FiDelete/></button>
-                        </li>
-                    ))}
-                </ul>
-                <input type="text" value={newStorage} onChange={(e) => setNewStorage(e.target.value)}
-                       placeholder="New Storage" className="w-full border-b-2 p-2 mt-4 focus:outline-none"/>
-                <button onClick={addNewStorage}
-                        className="w-full text-center bg-primaryColor text-white p-2 mt-2 rounded-md">
-                    Add Storage
-                </button>
-            </Modal>
         </div>
     );
 };
-
 
 export default ProductDetail;

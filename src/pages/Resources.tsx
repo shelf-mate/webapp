@@ -149,17 +149,19 @@ const Resources: React.FC = () => {
             .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
             .sort((a, b) => a.name.localeCompare(b.name));
     };
-
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-xl font-semibold text-center uppercase">Resources</h1>
+
+            <div className="my-3"></div>
+
             <div className="flex justify-center items-center mb-4">
                 <div className="flex items-center space-x-4">
                     <button
-                        onClick={() => setSelectedType('unit')}
-                        className={`p-2 ${selectedType === 'unit' ? 'font-bold text-primaryColor' : 'text-gray-600'}`}
+                        onClick={() => setSelectedType('storage')}
+                        className={`p-2 ${selectedType === 'storage' ? 'font-bold text-primaryColor' : 'text-gray-600'}`}
                     >
-                        Units
+                        Storages
                     </button>
                     <button
                         onClick={() => setSelectedType('category')}
@@ -168,16 +170,17 @@ const Resources: React.FC = () => {
                         Categories
                     </button>
                     <button
-                        onClick={() => setSelectedType('storage')}
-                        className={`p-2 ${selectedType === 'storage' ? 'font-bold text-primaryColor' : 'text-gray-600'}`}
+                        onClick={() => setSelectedType('unit')}
+                        className={`p-2 ${selectedType === 'unit' ? 'font-bold text-primaryColor' : 'text-gray-600'}`}
                     >
-                        Storages
+                        Units
                     </button>
                 </div>
             </div>
+
             <div className="flex justify-center items-center mb-4">
-                <div className="flex items-center border rounded-lg p-2 w-2/3">
-                    <CiSearch className="mr-2 text-gray-600" />
+                <div className="flex items-center border rounded-lg p-2 w-full">
+                    <CiSearch className="mr-2 text-gray-600"/>
                     <input
                         type="text"
                         value={searchQuery}
@@ -187,6 +190,7 @@ const Resources: React.FC = () => {
                     />
                 </div>
             </div>
+
             <div>
                 {error && <div className="text-red-500">{error}</div>}
                 {isLoading ? (
@@ -209,6 +213,7 @@ const Resources: React.FC = () => {
                     </ul>
                 )}
             </div>
+
             <div className="fixed bottom-4 right-4">
                 <button
                     onClick={() => openModal('add')}
@@ -217,7 +222,13 @@ const Resources: React.FC = () => {
                     <FiPlus />
                 </button>
             </div>
-            <Modal title={editMode === 'add' ? `Add ${selectedType}` : `Edit ${selectedType}`} isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
+            <Modal
+                title={editMode === 'add' ? `Add ${selectedType}` : `Edit ${selectedType}`}
+                isOpen={isModalOpen}
+                onClose={() => setModalOpen(false)}
+                onConfirm={handleSave}
+                confirmButtonLabel={editMode === 'add' ? 'Add' : 'Save'}
+            >
                 <input
                     type="text"
                     value={currentName}
@@ -225,23 +236,23 @@ const Resources: React.FC = () => {
                     placeholder={`Enter ${selectedType} name`}
                     className="w-full border-b-2 p-2 mt-4 focus:outline-none"
                 />
-                <button onClick={handleSave} className="w-full bg-primaryColor text-white p-2 mt-2 rounded">
-                    {editMode === 'add' ? 'Add' : 'Save'}
-                </button>
             </Modal>
-            <Modal title="Confirm Deletion" isOpen={isConfirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
+
+            <Modal
+                title="Confirm Deletion"
+                isOpen={isConfirmDeleteOpen}
+                onClose={() => setConfirmDeleteOpen(false)}
+                onConfirm={handleDelete}
+                confirmButtonLabel="Confirm Delete"
+                confirmButtonColor="bg-red-500"
+            >
                 <p className="text-center mb-4">
                     Are you sure you want to delete this {deleteType}? This will also delete all associated products.
                 </p>
-                <button onClick={handleDelete} className="w-full bg-red-500 text-white p-2 mt-2 rounded">
-                    Confirm Delete
-                </button>
-                <button onClick={() => setConfirmDeleteOpen(false)} className="w-full bg-gray-300 p-2 mt-2 rounded">
-                    Cancel
-                </button>
             </Modal>
         </div>
     );
+
 };
 
 export default Resources;
