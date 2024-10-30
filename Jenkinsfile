@@ -30,7 +30,7 @@ pipeline {
                 }
             }
         }
-        /* stage('Update GitOps') {
+        stage('Update GitOps') {
             when {
                 expression {
                     return localBranchToGitopsValuesPath.containsKey(getLocalBranchName())
@@ -39,10 +39,9 @@ pipeline {
             steps {
                 script {
                     def valuesPath = localBranchToGitopsValuesPath[getLocalBranchName()]
-                    updateGitops(appName: appName, valuesPath: valuesPath, credentialsId: "jozys-github-user", gitOpsRepo: "https://github.com/jozys/gitops.git", fileTypeToChange: "deployment", containerName: "db-delay-frontend")
-                    updateGitops(appName: appName, valuesPath: valuesPath, credentialsId: "jozys-github-user", gitOpsRepo: "https://github.com/jozys/gitops.git", fileTypeToChange: "deployment", containerName: "db-delay-backend")
+                    updateGitops(appName: appName, valuesPath: valuesPath, credentialsId: "tpausl-github-user", gitOpsRepo: "https://github.com/tpausl/gitops.git", fileTypeToChange: "deployment", containerName: "frontend")
                 }
             }
-        } */
+        }
     }
 }
