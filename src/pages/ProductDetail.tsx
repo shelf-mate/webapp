@@ -75,7 +75,6 @@ const ProductDetail: React.FC = () => {
             setIsDeleting(true);
             try {
                 await deleteProduct(id);
-                alert('Product deleted successfully!');
                 navigate('/');
             } catch (error) {
                 setError('Failed to delete product');

@@ -26,7 +26,7 @@ const Resources: React.FC = () => {
     const [units, setUnits] = useState<Unit[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [storages, setStorages] = useState<Storage[]>([]);
-    const [selectedType, setSelectedType] = useState<'unit' | 'category' | 'storage'>('unit');
+    const [selectedType, setSelectedType] = useState<'unit' | 'category' | 'storage'>('storage');
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
