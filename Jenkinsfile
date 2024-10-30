@@ -26,8 +26,6 @@ pipeline {
                                     "REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}"
                                 ])
                         }
-                        buildDockerImage(additionalImageTags: ["latest"])
-                        
                     }
                 }
             }
