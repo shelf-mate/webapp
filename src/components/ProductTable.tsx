@@ -1,151 +1,173 @@
-import React, { useState, useEffect } from 'react';
-import { CiSearch } from 'react-icons/ci';
-import { useNavigate } from 'react-router-dom';
-import { getProductsByStorage, getStorages, getProducts, Product as ApiProduct, Storage as ApiStorage } from "@shelf-mate/api-client-ts";
+import React, { useState, useEffect } from "react";
+import { CiSearch } from "react-icons/ci";
+import { useNavigate } from "react-router-dom";
+import {
+  getProductsByStorage,
+  getStorages,
+  getProducts,
+  Product as ApiProduct,
+  Storage as ApiStorage,
+} from "@shelf-mate/api-client-ts";
 import { init } from "@shelf-mate/api-client-ts";
 import Modal from "./Modal";
 
-init({ baseURL: "http://localhost:3000" });
+init({ baseURL: process.env.REACT_APP_API_BASE_URL });
 
 interface ApiResponse<T> {
-    message: string;
-    data: T;
+  message: string;
+  data: T;
 }
 
 interface Product extends ApiProduct {
-    daysLeft: number;
-    categoryName: string;
-    unitName: string;
+  daysLeft: number;
+  categoryName: string;
+  unitName: string;
 }
 
 interface Storage extends ApiStorage {}
 
 const ProductTable: React.FC = () => {
-    const [products, setProducts] = useState<Product[]>([]);
-    const navigate = useNavigate();
-    type SimpleStorage = { id: string; name: string };
-    const [storages, setStorages] = useState<(SimpleStorage | Storage)[]>([]);
-    const [selectedStorage, setSelectedStorage] = useState<string>('all');
-    const [searchQuery, setSearchQuery] = useState<string>('');
-    const [isShelfModalOpen, setShelfModalOpen] = useState<boolean>(false);
-    const [isSortModalOpen, setSortModalOpen] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-    const [sortBy, setSortBy] = useState<string>('Expiration');
-    const [isAscending, setIsAscending] = useState<boolean>(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const navigate = useNavigate();
+  type SimpleStorage = { id: string; name: string };
+  const [storages, setStorages] = useState<(SimpleStorage | Storage)[]>([]);
+  const [selectedStorage, setSelectedStorage] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isShelfModalOpen, setShelfModalOpen] = useState<boolean>(false);
+  const [isSortModalOpen, setSortModalOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>("Expiration");
+  const [isAscending, setIsAscending] = useState<boolean>(true);
 
-    useEffect(() => {
-        const fetchStoragesAndProducts = async () => {
-            setIsLoading(true);
-            try {
-                const storagesResponse = await getStorages();
-                const storagesApiResponse = storagesResponse as ApiResponse<Storage[]>;
-                setStorages([{ id: 'all', name: 'All Storages' }, ...storagesApiResponse.data]);
-                await fetchProducts('all');
-                setIsLoading(false);
-            } catch (err) {
-                setError('Failed to load storages and products');
-                setIsLoading(false);
-            }
+  useEffect(() => {
+    const fetchStoragesAndProducts = async () => {
+      setIsLoading(true);
+      try {
+        const storagesResponse = await getStorages();
+        const storagesApiResponse = storagesResponse as ApiResponse<Storage[]>;
+        setStorages([
+          { id: "all", name: "All Storages" },
+          ...storagesApiResponse.data,
+        ]);
+        await fetchProducts("all");
+        setIsLoading(false);
+      } catch (err) {
+        setError("Failed to load storages and products");
+        setIsLoading(false);
+      }
+    };
+    fetchStoragesAndProducts();
+  }, []);
+
+  const fetchProducts = async (storageId: string) => {
+    setIsLoading(true);
+    try {
+      const productsResponse =
+        storageId === "all"
+          ? await getProducts()
+          : await getProductsByStorage(storageId);
+      const productsApiResponse = productsResponse as ApiResponse<Product[]>;
+      const updatedProducts = productsApiResponse.data.map((product) => {
+        const today = new Date();
+        const expirationDate = new Date(product.expirationDate);
+        const daysLeft = Math.floor(
+          (expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        const categoryName = product.category?.name || "Unknown Category";
+        const unitName = product.unit?.name || "Unknown Unit";
+
+        return {
+          ...product,
+          daysLeft,
+          categoryName,
+          unitName,
         };
-        fetchStoragesAndProducts();
-    }, []);
+      });
 
-    const fetchProducts = async (storageId: string) => {
-        setIsLoading(true);
-        try {
-            const productsResponse = storageId === 'all' ? await getProducts() : await getProductsByStorage(storageId);
-            const productsApiResponse = productsResponse as ApiResponse<Product[]>;
-            const updatedProducts = productsApiResponse.data.map((product) => {
-                const today = new Date();
-                const expirationDate = new Date(product.expirationDate);
-                const daysLeft = Math.floor((expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                const categoryName = product.category?.name || 'Unknown Category';
-                const unitName = product.unit?.name || 'Unknown Unit';
+      setProducts(updatedProducts);
+      setIsLoading(false);
+    } catch (err) {
+      setError("Failed to load products");
+      setIsLoading(false);
+    }
+  };
 
-                return {
-                    ...product,
-                    daysLeft,
-                    categoryName,
-                    unitName,
-                };
-            });
+  const handleStorageChange = (storageId: string) => {
+    setSelectedStorage(storageId);
+    fetchProducts(storageId);
+    setShelfModalOpen(false);
+  };
 
-            setProducts(updatedProducts);
-            setIsLoading(false);
-        } catch (err) {
-            setError('Failed to load products');
-            setIsLoading(false);
-        }
-    };
+  const handleSortChange = (sortOption: string) => {
+    if (sortOption === sortBy) {
+      setIsAscending(!isAscending);
+    } else {
+      setSortBy(sortOption);
+      setIsAscending(true);
+    }
+    setSortModalOpen(false);
+  };
 
-    const handleStorageChange = (storageId: string) => {
-        setSelectedStorage(storageId);
-        fetchProducts(storageId);
-        setShelfModalOpen(false);
-    };
+  const filteredProducts = products
+    .filter((product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortBy === "Expiration") {
+        return isAscending ? a.daysLeft - b.daysLeft : b.daysLeft - a.daysLeft;
+      } else if (sortBy === "Name") {
+        return isAscending
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      } else if (sortBy === "Category") {
+        return isAscending
+          ? a.categoryName.localeCompare(b.categoryName)
+          : b.categoryName.localeCompare(a.categoryName);
+      } else if (sortBy === "Quantity") {
+        return isAscending ? a.quantity - b.quantity : b.quantity - a.quantity;
+      } else {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+    });
 
-    const handleSortChange = (sortOption: string) => {
-        if (sortOption === sortBy) {
-            setIsAscending(!isAscending);
-        } else {
-            setSortBy(sortOption);
-            setIsAscending(true);
-        }
-        setSortModalOpen(false);
-    };
+  return (
+    <div className="container mx-auto p-4 pb-20">
+      <h1 className="text-xl font-semibold text-center uppercase mb-4">
+        Products
+      </h1>
 
-    const filteredProducts = products
-        .filter((product) => product.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        .sort((a, b) => {
-            if (sortBy === 'Expiration') {
-                return isAscending ? a.daysLeft - b.daysLeft : b.daysLeft - a.daysLeft;
-            } else if (sortBy === 'Name') {
-                return isAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-            } else if (sortBy === 'Category') {
-                return isAscending
-                    ? a.categoryName.localeCompare(b.categoryName)
-                    : b.categoryName.localeCompare(a.categoryName);
-            } else if (sortBy === 'Quantity') {
-                return isAscending ? a.quantity - b.quantity : b.quantity - a.quantity;
-            } else {
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-            }
-        });
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+        <button
+          className="p-2 text-sm text-gray-600 focus:outline-none border rounded-lg sm:border-none"
+          onClick={() => setShelfModalOpen(true)}
+        >
+          {storages.find((storage) => storage.id === selectedStorage)?.name ||
+            "Select Storage"}
+        </button>
 
-    return (
-        <div className="container mx-auto p-4 pb-20">
-            <h1 className="text-xl font-semibold text-center uppercase mb-4">Products</h1>
+        <button
+          className="p-2 text-sm text-gray-600 focus:outline-none border rounded-lg sm:border-none"
+          onClick={() => setSortModalOpen(true)}
+        >
+          Sort by: {sortBy} {isAscending ? <span>↑</span> : <span>↓</span>}
+        </button>
+      </div>
 
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
-                <button
-                    className="p-2 text-sm text-gray-600 focus:outline-none border rounded-lg sm:border-none"
-                    onClick={() => setShelfModalOpen(true)}
-                >
-                    {storages.find(storage => storage.id === selectedStorage)?.name || 'Select Storage'}
-                </button>
-
-                <button
-                    className="p-2 text-sm text-gray-600 focus:outline-none border rounded-lg sm:border-none"
-                    onClick={() => setSortModalOpen(true)}
-                >
-                    Sort by: {sortBy} {isAscending ? <span>↑</span> : <span>↓</span>}
-                </button>
-            </div>
-
-            <div className="flex justify-center items-center mb-4">
-                <div className="flex items-center border rounded-lg p-2 w-full sm:w-2/3">
-                    <CiSearch className="mr-2 text-gray-600" />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search"
-                        className="focus:outline-none text-sm w-full"
-                    />
-                </div>
-            </div>
-
+      <div className="flex justify-center items-center mb-4">
+        <div className="flex items-center border rounded-lg p-2 w-full sm:w-2/3">
+          <CiSearch className="mr-2 text-gray-600" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search"
+            className="focus:outline-none text-sm w-full"
+          />
+        </div>
+      </div>
             {isLoading ? (
                 <div>Loading products and storages...</div>
             ) : error ? (
@@ -211,8 +233,60 @@ const ProductTable: React.FC = () => {
                 </ul>
             </Modal>
         </div>
-    );
+      )}
 
+      <Modal
+        title="Select a Storage"
+        isOpen={isShelfModalOpen}
+        onClose={() => setShelfModalOpen(false)}
+      >
+        <ul>
+          {storages.map((storage) => (
+            <li
+              key={storage.id}
+              className="cursor-pointer p-2 hover:bg-gray-100"
+              onClick={() => handleStorageChange(storage.id)}
+            >
+              {storage.name}
+            </li>
+          ))}
+        </ul>
+      </Modal>
+
+      <Modal
+        title="Sort by"
+        isOpen={isSortModalOpen}
+        onClose={() => setSortModalOpen(false)}
+      >
+        <ul>
+          <li
+            className="cursor-pointer p-2 hover:bg-gray-100"
+            onClick={() => handleSortChange("Expiration")}
+          >
+            Expiration
+          </li>
+          <li
+            className="cursor-pointer p-2 hover:bg-gray-100"
+            onClick={() => handleSortChange("Name")}
+          >
+            Name
+          </li>
+          <li
+            className="cursor-pointer p-2 hover:bg-gray-100"
+            onClick={() => handleSortChange("Category")}
+          >
+            Category
+          </li>
+          <li
+            className="cursor-pointer p-2 hover:bg-gray-100"
+            onClick={() => handleSortChange("Quantity")}
+          >
+            Quantity
+          </li>
+        </ul>
+      </Modal>
+    </div>
+  );
 };
 
 export default ProductTable;
