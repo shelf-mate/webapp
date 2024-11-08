@@ -8,7 +8,7 @@ import { getToken } from "firebase/messaging";
 import { messaging } from './firebase';
 import ProductDetail from "./pages/ProductDetail";
 import Resources from "./pages/Resources";
-import {FaThList} from "react-icons/fa";
+import {TbSitemap} from "react-icons/tb";
 
 const App: React.FC = () => {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
@@ -74,7 +74,7 @@ const App: React.FC = () => {
                 onClick={handleVibration}
             >
               <div className="flex flex-col items-center">
-                <FaThList className="text-2xl" />
+                <TbSitemap className="text-2xl" />
                 <span className="text-xs">Resources</span>
               </div>
             </NavLink>

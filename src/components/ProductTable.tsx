@@ -168,42 +168,70 @@ const ProductTable: React.FC = () => {
           />
         </div>
       </div>
+            {isLoading ? (
+                <div>Loading products and storages...</div>
+            ) : error ? (
+                <div className="text-red-500">{error}</div>
+            ) : (
+                <div className="flex flex-col space-y-4">
+                    {filteredProducts.map((product) => (
+                        <div
+                            key={product.id}
+                            className="flex justify-between items-center p-2 bg-white rounded-lg shadow-sm cursor-pointer"
+                            onClick={() => navigate(`/product/${product.id}`)}
+                        >
+                            <div>
+                                <h3 className="font-semibold">
+                                    {product.name.length > 25 ? `${product.name.slice(0, 25)}...` : product.name}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    {product.categoryName} | {product.quantity} {product.unitName}
+                                </p>
+                            </div>
 
-      {isLoading ? (
-        <div>Loading products and storages...</div>
-      ) : error ? (
-        <div className="text-red-500">{error}</div>
-      ) : (
-        <div className="flex flex-col space-y-4">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="flex justify-between items-center p-2 bg-white rounded-lg shadow-sm cursor-pointer"
-              onClick={() => navigate(`/product/${product.id}`)}
-            >
-              <div className="ml-4">
-                <h3 className="font-semibold">
-                  {product.name.length > 25
-                    ? `${product.name.slice(0, 25)}...`
-                    : product.name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {product.categoryName} | {product.quantity} {product.unitName}
-                </p>
-              </div>
+                            <div className="flex items-center">
+                                <p className="text-sm text-gray-500">{product.daysLeft} Days Left</p>
+                                <div
+                                    className={`ml-2 w-3 h-3 rounded-full ${
+                                        product.daysLeft <= 2 ? 'bg-red-500' : 'bg-green-500'
+                                    }`}
+                                ></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
-              <div className="flex items-center">
-                <p className="text-sm text-gray-500">
-                  {product.daysLeft} Days Left
-                </p>
-                <div
-                  className={`ml-2 w-3 h-3 rounded-full ${
-                    product.daysLeft <= 2 ? "bg-red-500" : "bg-green-500"
-                  }`}
-                ></div>
-              </div>
-            </div>
-          ))}
+            <Modal title="Select a Storage" isOpen={isShelfModalOpen} onClose={() => setShelfModalOpen(false)}>
+                <ul>
+                    {storages.map((storage) => (
+                        <li
+                            key={storage.id}
+                            className="cursor-pointer p-2 hover:bg-gray-100"
+                            onClick={() => handleStorageChange(storage.id)}
+                        >
+                            {storage.name}
+                        </li>
+                    ))}
+                </ul>
+            </Modal>
+
+            <Modal title="Sort by" isOpen={isSortModalOpen} onClose={() => setSortModalOpen(false)}>
+                <ul>
+                    <li className="cursor-pointer p-2 hover:bg-gray-100" onClick={() => handleSortChange('Expiration')}>
+                        Expiration
+                    </li>
+                    <li className="cursor-pointer p-2 hover:bg-gray-100" onClick={() => handleSortChange('Name')}>
+                        Name
+                    </li>
+                    <li className="cursor-pointer p-2 hover:bg-gray-100" onClick={() => handleSortChange('Category')}>
+                        Category
+                    </li>
+                    <li className="cursor-pointer p-2 hover:bg-gray-100" onClick={() => handleSortChange('Quantity')}>
+                        Quantity
+                    </li>
+                </ul>
+            </Modal>
         </div>
       )}
 
