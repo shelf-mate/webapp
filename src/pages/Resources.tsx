@@ -26,7 +26,7 @@ const Resources: React.FC = () => {
     const [units, setUnits] = useState<Unit[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [storages, setStorages] = useState<Storage[]>([]);
-    const [selectedType, setSelectedType] = useState<'unit' | 'category' | 'storage'>('unit');
+    const [selectedType, setSelectedType] = useState<'unit' | 'category' | 'storage'>('storage');
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -150,7 +150,7 @@ const Resources: React.FC = () => {
             .sort((a, b) => a.name.localeCompare(b.name));
     };
     return (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto p-4 pb-20">
             <h1 className="text-xl font-semibold text-center uppercase">Resources</h1>
 
             <div className="my-3"></div>
@@ -200,12 +200,12 @@ const Resources: React.FC = () => {
                         {getFilteredData().map(resource => (
                             <li key={resource.id} className="flex justify-between items-center p-2">
                                 {resource.name}
-                                <div className="flex space-x-2">
-                                    <button onClick={() => openModal('edit', resource.name, resource.id)}>
-                                        <FiEdit />
+                                <div className="flex space-x-4">
+                                    <button onClick={() => openModal('edit', resource.name, resource.id)} className="text-lg ">
+                                        <FiEdit size={20} />
                                     </button>
-                                    <button onClick={() => openDeleteConfirmation(resource.id, selectedType)}>
-                                        <FiDelete />
+                                    <button onClick={() => openDeleteConfirmation(resource.id, selectedType)} className="text-lg">
+                                        <FiDelete size={20} />
                                     </button>
                                 </div>
                             </li>
@@ -219,7 +219,7 @@ const Resources: React.FC = () => {
                     onClick={() => openModal('add')}
                     className="bg-primaryColor text-white p-3 rounded-full shadow-lg hover:bg-primaryColor-dark mb-16"
                 >
-                    <FiPlus />
+                    <FiPlus size={24} />
                 </button>
             </div>
             <Modal
