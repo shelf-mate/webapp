@@ -138,9 +138,13 @@ const ProductTable: React.FC = () => {
       )
       .sort((a, b) => {
         if (sortBy === "Expiration") {
-          if (a.isExpired && !b.isExpired) return -1;
-          if (!a.isExpired && b.isExpired) return 1;
-
+          if (a.isExpired && b.isExpired) {
+            return isAscending ? b.daysLeft - a.daysLeft : a.daysLeft - b.daysLeft;
+          } else if (a.isExpired) {
+            return -1;
+          } else if (b.isExpired) {
+            return 1;
+          }
           return isAscending ? a.daysLeft - b.daysLeft : b.daysLeft - a.daysLeft;
         } else if (sortBy === "Name") {
           return isAscending
@@ -153,9 +157,9 @@ const ProductTable: React.FC = () => {
         } else if (sortBy === "Quantity") {
           return isAscending ? a.quantity - b.quantity : b.quantity - a.quantity;
         } else {
-          return (
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
+          return isAscending
+              ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }
       });
 
