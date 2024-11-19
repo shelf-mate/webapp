@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProduct, updateProduct, deleteProduct, getUnits, getCategories, getStorages, createCategory, createUnit, createStorage, deleteCategory, deleteUnit, deleteStorage, Product as ApiProduct, Unit, Category, Storage } from '@shelf-mate/api-client-ts';
-import { AxiosError } from "axios";
+import { getProduct, updateProduct, deleteProduct, getUnits, getCategories, getStorages, Product as ApiProduct, Unit, Category, Storage } from '@shelf-mate/api-client-ts';
 import Modal from '../components/Modal';
-import {FiArrowLeft, FiDelete} from "react-icons/fi";
+import { FiArrowLeft } from "react-icons/fi";
 
 const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -14,16 +13,19 @@ const ProductDetail: React.FC = () => {
     const [storages, setStorages] = useState<Storage[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
     const [isUnitModalOpen, setUnitModalOpen] = useState(false);
     const [isStorageModalOpen, setStorageModalOpen] = useState(false);
-    const [newCategory, setNewCategory] = useState('');
-    const [newUnit, setNewUnit] = useState('');
-    const [newStorage, setNewStorage] = useState('');
 
-    const [expirationDate, setExpirationDate] = useState<string | undefined>(undefined);
+    const [editedName, setEditedName] = useState<string | undefined>(undefined);
+    const [editedQuantity, setEditedQuantity] = useState<number | undefined>(undefined);
+    const [editedExpirationDate, setEditedExpirationDate] = useState<string | undefined>(undefined);
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+    const [selectedStorage, setSelectedStorage] = useState<Storage | null>(null);
+
+    const [formError, setFormError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,15 +43,22 @@ const ProductDetail: React.FC = () => {
                 ]);
 
                 if ('data' in productResponse && 'data' in unitsResponse && 'data' in categoriesResponse && 'data' in storagesResponse) {
-                    setProduct(productResponse.data);
+                    const productData = productResponse.data as ApiProduct;
+                    setProduct(productData);
                     setUnits(unitsResponse.data as Unit[]);
                     setCategories(categoriesResponse.data as Category[]);
                     setStorages(storagesResponse.data as Storage[]);
-                    setExpirationDate(new Date(productResponse.data.expirationDate).toISOString().split('T')[0]);
+
+                    setEditedName(productData.name);
+                    setEditedQuantity(productData.quantity);
+                    setEditedExpirationDate(new Date(productData.expirationDate).toISOString().split('T')[0]);
+                    setSelectedCategory(productData.category || null);
+                    setSelectedUnit(productData.unit || null);
+                    setSelectedStorage(productData.storage || null);
                 } else {
                     setError('Failed to retrieve product data');
                 }
-            } catch (error) {
+            } catch {
                 setError('Failed to load product details');
             } finally {
                 setIsLoading(false);
@@ -58,99 +67,37 @@ const ProductDetail: React.FC = () => {
         fetchData();
     }, [id]);
 
-    const handleUpdateField = async (field: Partial<ApiProduct>) => {
-        if (!id || !product) return;
+    const handleSave = async () => {
+        if (!editedName || !selectedCategory || !editedQuantity || !selectedUnit || !selectedStorage || !editedExpirationDate) {
+            setFormError('Please fill out all fields.');
+            return;
+        }
+        setFormError(null);
+
         try {
-            const updatedProduct = { ...product, ...field };
-            await updateProduct(id, field);
-            setProduct(updatedProduct);
-        } catch (error) {
-            console.error('Failed to update product:', error);
-            setError('Failed to update product: Request error');
+            await updateProduct(id!, {
+                name: editedName,
+                quantity: editedQuantity,
+                expirationDate: new Date(`${editedExpirationDate}T12:00:00Z`),
+                categoryId: selectedCategory.id,
+                unitId: selectedUnit.id,
+                storageId: selectedStorage.id,
+            });
+            navigate('/');
+        } catch {
+            setError('Failed to update product');
         }
     };
+
 
     const handleDelete = async () => {
         if (id) {
-            setIsDeleting(true);
             try {
                 await deleteProduct(id);
-                alert('Product deleted successfully!');
                 navigate('/');
-            } catch (error) {
+            } catch {
                 setError('Failed to delete product');
-            } finally {
-                setIsDeleting(false);
             }
-        }
-    };
-
-    const addNewCategory = async () => {
-        try {
-            const response = await createCategory({ name: newCategory });
-            if ('data' in response) {
-                setCategories([...categories, response.data]);
-                setNewCategory('');
-            } else {
-                console.error("Response did not contain data", response);
-            }
-        } catch (error) {
-            console.error('Failed to add category:', error);
-        }
-    };
-
-    const addNewUnit = async () => {
-        try {
-            const response = await createUnit({ name: newUnit });
-            if ('data' in response) {
-                setUnits([...units, response.data]);
-                setNewUnit('');
-            } else {
-                console.error("Response did not contain data", response);
-            }
-        } catch (error) {
-            console.error('Failed to add unit:', error);
-        }
-    };
-
-    const addNewStorage = async () => {
-        try {
-            const response = await createStorage({ name: newStorage });
-            if ('data' in response) {
-                setStorages([...storages, response.data]);
-                setNewStorage('');
-            } else {
-                console.error("Response did not contain data", response);
-            }
-        } catch (error) {
-            console.error('Failed to add storage:', error);
-        }
-    };
-
-    const handleDeleteCategory = async (categoryId: string) => {
-        try {
-            await deleteCategory(categoryId);
-            setCategories(categories.filter(category => category.id !== categoryId));
-        } catch (error) {
-            console.error('Failed to delete category:', error);
-        }
-    };
-
-    const handleDeleteUnit = async (unitId: string) => {
-        try {
-            await deleteUnit(unitId);
-            setUnits(units.filter(unit => unit.id !== unitId));
-        } catch (error) {
-            console.error('Failed to delete unit:', error);
-        }
-    };
-
-    const handleDeleteStorage = async (storageId: string) => {
-        try {
-            await deleteStorage(storageId);
-            setStorages(storages.filter(storage => storage.id !== storageId));
-        } catch (error) {
-            console.error('Failed to delete storage:', error);
         }
     };
 
@@ -160,10 +107,49 @@ const ProductDetail: React.FC = () => {
 
     return (
         <div className="container mx-auto p-4">
+            {isCategoryModalOpen && (
+                <Modal title="Select Category" isOpen={isCategoryModalOpen} onClose={() => setCategoryModalOpen(false)}>
+                    <h2>Select Category</h2>
+                    <ul className="max-h-60 overflow-y-auto">
+                        {categories.map(category => (
+                            <li key={category.id} onClick={() => { setSelectedCategory(category); setCategoryModalOpen(false); }} className="cursor-pointer p-2 border-b">
+                                {category.name}
+                            </li>
+                        ))}
+                    </ul>
+                </Modal>
+            )}
+
+            {isUnitModalOpen && (
+                <Modal title="Select Unit" isOpen={isUnitModalOpen} onClose={() => setUnitModalOpen(false)}>
+                    <h2>Select Unit</h2>
+                    <ul className="max-h-60 overflow-y-auto">
+                        {units.map(unit => (
+                            <li key={unit.id} onClick={() => { setSelectedUnit(unit); setUnitModalOpen(false); }} className="cursor-pointer p-2 border-b">
+                                {unit.name}
+                            </li>
+                        ))}
+                    </ul>
+                </Modal>
+            )}
+
+            {isStorageModalOpen && (
+                <Modal title="Select Storage" isOpen={isStorageModalOpen} onClose={() => setStorageModalOpen(false)}>
+                    <h2>Select Storage</h2>
+                    <ul className="max-h-60 overflow-y-auto">
+                        {storages.map(storage => (
+                            <li key={storage.id} onClick={() => { setSelectedStorage(storage); setStorageModalOpen(false); }} className="cursor-pointer p-2 border-b">
+                                {storage.name}
+                            </li>
+                        ))}
+                    </ul>
+                </Modal>
+            )}
+
             <div className="flex items-center mb-4">
                 <div className="w-1/3 flex justify-start">
                     <button onClick={() => navigate(-1)} className="text-2xl">
-                        <FiArrowLeft/>
+                        <FiArrowLeft />
                     </button>
                 </div>
                 <h1 className="w-1/3 text-xl font-semibold text-center uppercase">Details</h1>
@@ -174,8 +160,8 @@ const ProductDetail: React.FC = () => {
                 <label className="block text-sm font-semibold text-gray-600">Name</label>
                 <input
                     type="text"
-                    value={product.name}
-                    onChange={(e) => handleUpdateField({ name: e.target.value })}
+                    value={editedName || ''}
+                    onChange={(e) => setEditedName(e.target.value)}
                     className="w-full border-b-2 p-2 pl-0 focus:outline-none"
                 />
             </div>
@@ -183,7 +169,7 @@ const ProductDetail: React.FC = () => {
             <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-600">Category</label>
                 <button onClick={() => setCategoryModalOpen(true)} className="w-full text-left border-b-2 p-2 pl-0">
-                    {product.category?.name || 'Select Category'}
+                    {selectedCategory?.name || 'Select Category'}
                 </button>
             </div>
 
@@ -191,8 +177,8 @@ const ProductDetail: React.FC = () => {
                 <label className="block text-sm font-semibold text-gray-600">Quantity</label>
                 <input
                     type="number"
-                    value={product.quantity}
-                    onChange={(e) => handleUpdateField({ quantity: parseInt(e.target.value, 10) })}
+                    value={editedQuantity || ''}
+                    onChange={(e) => setEditedQuantity(parseInt(e.target.value, 10))}
                     className="w-full border-b-2 p-2 pl-0 focus:outline-none"
                 />
             </div>
@@ -200,14 +186,14 @@ const ProductDetail: React.FC = () => {
             <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-600">Unit</label>
                 <button onClick={() => setUnitModalOpen(true)} className="w-full text-left border-b-2 p-2 pl-0">
-                    {product.unit?.name || 'Select Unit'}
+                    {selectedUnit?.name || 'Select Unit'}
                 </button>
             </div>
 
             <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-600">Storage</label>
                 <button onClick={() => setStorageModalOpen(true)} className="w-full text-left border-b-2 p-2 pl-0">
-                    {product.storage?.name || 'Select Storage'}
+                    {selectedStorage?.name || 'Select Storage'}
                 </button>
             </div>
 
@@ -215,18 +201,26 @@ const ProductDetail: React.FC = () => {
                 <label className="block text-sm font-semibold text-gray-600">Expiration Date</label>
                 <input
                     type="date"
-                    value={expirationDate || ''}
-                    onChange={(e) => {
-                        setExpirationDate(e.target.value);
-                        handleUpdateField({ expirationDate: new Date(`${e.target.value}T12:00:00Z`) });
-                    }}
+                    value={editedExpirationDate || ''}
+                    onChange={(e) => setEditedExpirationDate(e.target.value)}
                     className="w-full border-b-2 p-2 pl-0 focus:outline-none"
                 />
             </div>
 
-            <button onClick={handleDelete} className="w-full bg-red-500 text-white p-3 mt-2 rounded-md">
-                Delete
-            </button>
+            {formError && <p className="text-red-500 text-sm mb-4">{formError}</p>}
+
+            <div className="flex gap-4">
+                <button
+                    onClick={handleSave}
+                    className={`w-full p-3 rounded-md ${editedName && editedQuantity && selectedCategory && selectedUnit && selectedStorage && editedExpirationDate ? 'bg-primaryColor text-white' : 'bg-gray-400 text-gray-700 cursor-not-allowed'}`}
+                    disabled={!editedName || !editedQuantity || !selectedCategory || !selectedUnit || !selectedStorage || !editedExpirationDate}
+                >
+                    Save
+                </button>
+                <button onClick={handleDelete} className="w-full bg-red-500 text-white p-3 rounded-md">
+                    Delete
+                </button>
+            </div>
         </div>
     );
 };
