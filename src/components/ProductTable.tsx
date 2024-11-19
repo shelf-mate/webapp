@@ -107,14 +107,23 @@ const ProductTable: React.FC = () => {
   const handleStorageToggle = (storageId: string) => {
     setSelectedStorages((prevSelectedStorages) => {
       if (storageId === "all") {
-        return ["all"];
+        if (prevSelectedStorages.length === 1 && prevSelectedStorages.includes("all")) {
+          return prevSelectedStorages;
+        }
+        return prevSelectedStorages.includes("all")
+            ? prevSelectedStorages.filter((id) => id !== "all")
+            : ["all"];
       }
-
       const newSelected = prevSelectedStorages.includes(storageId)
           ? prevSelectedStorages.filter((id) => id !== storageId)
           : [...prevSelectedStorages, storageId];
-
-      return newSelected.filter((id) => id !== "all");
+      if (newSelected.length === 0) {
+        return ["all"];
+      }
+      if (newSelected.includes("all") && newSelected.length > 1) {
+        return newSelected.filter((id) => id !== "all");
+      }
+      return newSelected;
     });
   };
 
